@@ -1,39 +1,89 @@
-// PRE-ENTREGA 4 - SIMULADOR DE PRESUPUESTOS DE MUEBLES
-// Incorporación de Arrays
+// PRE-ENTREGA 5 - SIMULADOR DE PRESUPUESTOS DE MUEBLES
+// Incorporación de clases, objetos y métodos de instancia
 
+// PASO 1 - CLASE MUEBLE
+
+class Mueble {
+    constructor(id, nombre, precio, categoria, stock) {
+        this.id = id;
+        this.nombre = nombre;
+        this.precio = precio;
+        this.categoria = categoria;
+        this.stock = stock;
+    }
+
+    // Calcula el precio total según la cantidad
+    calcularPrecio(cantidad) {
+        return this.precio * cantidad;
+    }
+
+    // Calcula el precio con descuento
+    aplicarDescuento(porcentaje) {
+        return this.precio - (this.precio * porcentaje / 100);
+    }
+}
+// PASO 2 - CREACIÓN DE OBJETOS
+
+// Creamos cinco muebles utilizando la clase Mueble
+
+const mesa = new Mueble(1, "Mesa", 250000, "Comedor", 10);
+
+const silla = new Mueble(2, "Silla", 50000, "Comedor", 20);
+
+const escritorio = new Mueble(3, "Escritorio", 180000, "Oficina", 8);
+
+const placard = new Mueble(4, "Placard", 450000, "Dormitorio", 5);
+
+const biblioteca = new Mueble(5, "Biblioteca modular", 200000, "Living", 6);
+
+// Guardamos los objetos en un array
+const catalogoMuebles = [
+    mesa,
+    silla,
+    escritorio,
+    placard,
+    biblioteca
+];
+// Mostramos los objetos en la consola
+
+console.log("Catálogo de muebles con objetos:");
+console.log(catalogoMuebles);
+
+// Probamos los métodos de la clase
+
+console.log("Precio de 2 mesas: $" + mesa.calcularPrecio(2));
+
+console.log("Precio de una silla con 10% de descuento: $" + silla.aplicarDescuento(10));
 // Catálogo inicial de muebles disponibles
 
-let mueblesDisponibles = [
-    "Mesa",
-    "Silla",
-    "Escritorio",
-    "Placard",
-    "Biblioteca"
-];
+// Creamos un listado de nombres a partir de los objetos
+let mueblesDisponibles = catalogoMuebles.map(mueble => mueble.nombre);
 
+// Creamos una copia para practicar los métodos de arrays
+let catalogoPractica = [...mueblesDisponibles];
 console.log("Catálogo inicial de muebles:");
 console.log(mueblesDisponibles);
 
 // PASO 2 - MANIPULACIÓN DE ARRAYS
 
 // Agregamos un mueble al final del catálogo
-mueblesDisponibles.push("Cama");
+catalogoPractica.push("Cama");
 
 console.log("Se agregó una cama al catálogo.");
 
 // Agregamos un mueble prioritario al principio
-mueblesDisponibles.unshift("Mesa de luz");
+catalogoPractica.unshift("Mesa de luz");
 
 console.log("Se agregó una mesa de luz al principio.");
 
 // Eliminamos el último mueble del catálogo
-let muebleEliminado = mueblesDisponibles.pop();
+let muebleEliminado = catalogoPractica.pop();
 
 console.log("Se ha eliminado el mueble: " + muebleEliminado);
 
 // Mostramos el catálogo actualizado
 console.log("Catálogo actualizado:");
-console.log(mueblesDisponibles);
+console.log(catalogoPractica);
 
 // PASO 3 - BÚSQUEDA Y VALIDACIÓN DE MUEBLES
 
@@ -70,21 +120,21 @@ if (muebleBuscado !== null && catalogoBusqueda.includes(muebleBuscado)) {
 // PASO 4 - ACTUALIZACIÓN DEL CATÁLOGO CON SPLICE
 
 // Buscamos la posición de Biblioteca
-let indiceBiblioteca = mueblesDisponibles.indexOf("Biblioteca");
+let indiceBiblioteca = catalogoPractica.indexOf("Biblioteca modular");
 
 // Verificamos que exista antes de modificarla
 if (indiceBiblioteca !== -1) {
 
-    // Reemplazamos Biblioteca por Biblioteca modular
-    mueblesDisponibles.splice(indiceBiblioteca, 1, "Biblioteca modular");
+   // Reemplazamos Biblioteca modular por Biblioteca personalizada
+   catalogoPractica.splice(indiceBiblioteca, 1, "Biblioteca personalizada");
 
-    console.log("Se reemplazó Biblioteca por Biblioteca modular.");
+ console.log("Se reemplazó Biblioteca modular por Biblioteca personalizada.");
 
 }
 
 // Mostramos el catálogo después de la modificación
 console.log("Catálogo después de utilizar splice:");
-console.log(mueblesDisponibles);
+console.log(catalogoPractica);
 
 // PASO 5 - FUNCIÓN PARA RECORRER EL CATÁLOGO
 
@@ -104,10 +154,7 @@ mostrarCatalogo();
 // Actualizamos el catálogo para validar presupuestos
 catalogoBusqueda = mueblesDisponibles.map(mueble => mueble.toLowerCase());
 
-function calcularTotal(precio, cantidad) {
-    let total = precio * cantidad;
-    return total;
-}
+
 const calcularAnticipo = (total) => {
     return total * 0.5;
 };
@@ -124,21 +171,33 @@ const nombre = prompt("¿Cuál es tu nombre?");
 let continuar = "si";
 
 while (continuar === "si") {
+// Solicitamos el mueble que desea presupuestar
 let producto = prompt("¿Qué mueble querés presupuestar?");
-let precio = Number(prompt("¿Cuál es el precio del mueble?"));
+
+// Buscamos el mueble dentro del catálogo de objetos
+let muebleSeleccionado = null;
+
+if (producto !== null) {
+    muebleSeleccionado = catalogoMuebles.find(
+        mueble => mueble.nombre.toLowerCase() === producto.trim().toLowerCase()
+    ) || null;
+}
+
+// Solicitamos la cantidad
 let cantidad = Number(prompt("¿Cuántas unidades querés presupuestar?"));
 
+// Obtenemos el precio directamente del objeto
+let precio = muebleSeleccionado ? muebleSeleccionado.precio : 0;
+
 if (
-    producto !== null &&
-    catalogoBusqueda.includes(producto.trim().toLowerCase()) &&
-    Number.isFinite(precio) &&
+    muebleSeleccionado !== null &&
     Number.isInteger(cantidad) &&
-    precio > 0 &&
-    cantidad > 0
+    cantidad > 0 &&
+    cantidad <= muebleSeleccionado.stock
 ) {
     console.log("Los datos ingresados son correctos.");
 
-    let total = calcularTotal(precio, cantidad);
+ let total = muebleSeleccionado.calcularPrecio(cantidad);
     let anticipo = calcularAnticipo(total);
 
     clasificarPresupuesto(total);
@@ -146,19 +205,17 @@ if (
     console.log("Total del presupuesto: $" + total);
     console.log("Anticipo del 50%: $" + anticipo);
 
-    let mensaje = "Hola " + nombre +
-        ", solicitaste " + cantidad +
-        " unidades de " + producto +
-        ". El total del presupuesto es $" + total;
+let mensaje = "Hola " + nombre +
+    ", solicitaste " + cantidad +
+    " unidades de " + producto +
+    ".\n\nTotal del presupuesto: $" + total +
+    "\nAnticipo del 50%: $" + anticipo;
 
     alert(mensaje);
 
 } else {
 
-    if (
-        producto === null ||
-        !catalogoBusqueda.includes(producto.trim().toLowerCase())
-    ) {
+   if (muebleSeleccionado === null) {
 
         console.log("El mueble solicitado no está disponible.");
 
@@ -168,7 +225,7 @@ if (
 
         console.log("El precio o la cantidad ingresados no son válidos.");
 
-        alert("Error: ingresá un precio mayor a cero y una cantidad entera positiva.");
+    alert("Error: ingresá una cantidad entera positiva que no supere el stock disponible.");
 
     }
 
