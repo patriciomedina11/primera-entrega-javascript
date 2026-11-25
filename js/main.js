@@ -1,380 +1,737 @@
-// PRE-ENTREGA 6 - SIMULADOR DE PRESUPUESTOS DE MUEBLES
-// Funciones de orden superior: find, filter, map y reduce
+// ==========================================
+// PRE-ENTREGA 7
+// INTERFAZ DINÁMICA CON DOM Y EVENTOS
+// SIMULADOR DE PRESUPUESTOS DE MUEBLES
+// ==========================================
+
 
 // ==========================================
 // 1. CLASE MUEBLE
 // ==========================================
 
 class Mueble {
+
     constructor(id, nombre, precio, categoria, stock) {
+
         this.id = id;
         this.nombre = nombre;
         this.precio = precio;
         this.categoria = categoria;
         this.stock = stock;
+
     }
 
-    // Calcula el precio total según la cantidad solicitada
     calcularPrecio(cantidad) {
+
         return this.precio * cantidad;
+
     }
 
-    // Calcula el precio aplicando un descuento
     aplicarDescuento(porcentaje) {
+
         return this.precio - (this.precio * porcentaje / 100);
+
     }
+
 }
 
+
 // ==========================================
-// 2. CREACIÓN DE OBJETOS
+// 2. ARRAY DE OBJETOS
 // ==========================================
 
-const mesa = new Mueble(1, "Mesa", 250000, "Comedor", 10);
-const silla = new Mueble(2, "Silla", 50000, "Comedor", 20);
-const escritorio = new Mueble(3, "Escritorio", 180000, "Oficina", 8);
-const placard = new Mueble(4, "Placard", 450000, "Dormitorio", 5);
-const biblioteca = new Mueble(5, "Biblioteca modular", 200000, "Living", 6);
-
-// Array de objetos
 const catalogoMuebles = [
-    mesa,
-    silla,
-    escritorio,
-    placard,
-    biblioteca
+
+    new Mueble(1, "Mesa", 250000, "Comedor", 10),
+
+    new Mueble(2, "Silla", 50000, "Comedor", 20),
+
+    new Mueble(3, "Escritorio", 180000, "Oficina", 8),
+
+    new Mueble(4, "Placard", 450000, "Dormitorio", 5),
+
+    new Mueble(5, "Biblioteca modular", 200000, "Living", 6)
+
 ];
 
+
 // ==========================================
-// 3. FUNCIONES GENERALES
+// 3. SELECCIÓN DE ELEMENTOS DEL DOM
+// ==========================================
+
+const formularioMueble = document.getElementById("formulario-mueble");
+
+const inputNombre = document.getElementById("nombre-mueble");
+
+const inputPrecio = document.getElementById("precio-mueble");
+
+const inputCategoria = document.getElementById("categoria-mueble");
+
+const inputStock = document.getElementById("stock-mueble");
+
+const contenedorItems = document.getElementById("contenedor-items");
+
+const inputBuscar = document.getElementById("buscar-mueble");
+
+const inputFiltroPresupuesto = document.getElementById("filtro-presupuesto");
+
+const mensaje = document.getElementById("mensaje");
+
+const formularioPresupuesto = document.getElementById("formulario-presupuesto");
+
+const inputCliente = document.getElementById("nombre-cliente");
+
+const seleccionarMueble = document.getElementById("seleccionar-mueble");
+
+const inputCantidad = document.getElementById("cantidad-mueble");
+
+const resultadoPresupuesto = document.getElementById("resultado-presupuesto");
+
+const resumenInventario = document.getElementById("resumen-inventario");
+
+
+// ==========================================
+// 4. FUNCIONES GENERALES
 // ==========================================
 
 // Formatear precios en pesos argentinos
+
 function formatoPrecio(valor) {
-    return "$" + valor.toLocaleString("es-AR");
+
+    return "$" + valor.toLocaleString("es-AR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    });
+
 }
+
 
 // Calcular anticipo del 50%
-const calcularAnticipo = (total) => {
+
+function calcularAnticipo(total) {
+
     return total * 0.5;
-};
 
-// Clasificar presupuestos
+}
+
+
+// Clasificar presupuesto
+
 function clasificarPresupuesto(total) {
+
     if (total >= 1000000) {
+
         return "Presupuesto grande";
+
     } else if (total >= 500000) {
+
         return "Presupuesto mediano";
+
     } else {
+
         return "Presupuesto pequeño";
+
     }
+
 }
 
-// ==========================================
-// 4. MOSTRAR CATÁLOGO - MAP()
-// ==========================================
 
-function mostrarCatalogo() {
+// Evitar que los datos ingresados se interpreten como HTML
 
-    const listado = catalogoMuebles.map(mueble => {
-        return (
-            "ID: " + mueble.id +
-            " | " + mueble.nombre +
-            " | Precio: " + formatoPrecio(mueble.precio) +
-            " | Categoría: " + mueble.categoria +
-            " | Stock: " + mueble.stock
-        );
-    });
+function escaparHTML(texto) {
 
-    console.log("CATÁLOGO COMPLETO:");
-    console.log(listado);
+    return String(texto).replace(/[&<>"']/g, caracter => {
 
-    alert("CATÁLOGO DE MUEBLES\n\n" + listado.join("\n"));
-}
-
-// ==========================================
-// 5. BUSCAR MUEBLE - FIND()
-// ==========================================
-
-function buscarMueble() {
-
-    let nombreBuscado = prompt("Ingresá el nombre del mueble que querés buscar:");
-
-    if (nombreBuscado === null) {
-        return;
-    }
-
-    nombreBuscado = nombreBuscado.trim().toLowerCase();
-
-    const muebleEncontrado = catalogoMuebles.find(mueble =>
-        mueble.nombre.toLowerCase() === nombreBuscado
-    );
-
-    if (muebleEncontrado) {
-
-        console.log("Mueble encontrado:", muebleEncontrado);
-
-        alert(
-            "MUEBLE ENCONTRADO\n\n" +
-            "Nombre: " + muebleEncontrado.nombre +
-            "\nPrecio: " + formatoPrecio(muebleEncontrado.precio) +
-            "\nCategoría: " + muebleEncontrado.categoria +
-            "\nStock: " + muebleEncontrado.stock
-        );
-
-    } else {
-
-        console.log("No se encontró el mueble solicitado.");
-
-        alert("El mueble solicitado no existe en nuestro catálogo.");
-    }
-}
-
-// ==========================================
-// 6. FILTRAR POR PRESUPUESTO - FILTER()
-// ==========================================
-
-function filtrarPorPresupuesto() {
-
-    let presupuesto = prompt("¿Cuál es tu presupuesto máximo disponible?");
-
-    if (presupuesto === null || presupuesto.trim() === "") {
-        return;
-    }
-
-    presupuesto = Number(presupuesto);
-
-    if (!Number.isFinite(presupuesto) || presupuesto <= 0) {
-        alert("Ingresá un presupuesto válido mayor a cero.");
-        return;
-    }
-
-    // Filtramos los muebles que no superen el presupuesto
-    const mueblesFiltrados = catalogoMuebles.filter(mueble =>
-        mueble.precio <= presupuesto && mueble.stock > 0
-    );
-
-    console.log("Muebles dentro del presupuesto:", mueblesFiltrados);
-
-    if (mueblesFiltrados.length > 0) {
-
-        const resultado = mueblesFiltrados.map(mueble =>
-            mueble.nombre + " - " + formatoPrecio(mueble.precio)
-        );
-
-        alert(
-            "MUEBLES DENTRO DE TU PRESUPUESTO\n\n" +
-            resultado.join("\n")
-        );
-
-    } else {
-
-        alert("No encontramos muebles dentro de ese presupuesto.");
-    }
-}
-
-// ==========================================
-// 7. SIMULAR DESCUENTOS - MAP()
-// ==========================================
-
-function simularDescuentos() {
-
-    let porcentaje = prompt("¿Qué porcentaje de descuento querés simular?");
-
-    if (porcentaje === null || porcentaje.trim() === "") {
-        return;
-    }
-
-    porcentaje = Number(porcentaje);
-
-    if (!Number.isFinite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
-        alert("Ingresá un porcentaje entre 0 y 100.");
-        return;
-    }
-
-    // Transformamos los datos para mostrar nuevos precios
-    const mueblesConDescuento = catalogoMuebles.map(mueble => {
-        return {
-            nombre: mueble.nombre,
-            precioOriginal: mueble.precio,
-            precioConDescuento: mueble.aplicarDescuento(porcentaje)
+        const equivalencias = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
         };
+
+        return equivalencias[caracter];
+
     });
 
-    console.log("Muebles con descuento:", mueblesConDescuento);
-
-    const listado = mueblesConDescuento.map(mueble =>
-        mueble.nombre +
-        "\nPrecio original: " + formatoPrecio(mueble.precioOriginal) +
-        "\nPrecio con descuento: " + formatoPrecio(mueble.precioConDescuento)
-    );
-
-    alert(
-        "SIMULACIÓN DE DESCUENTOS DEL " + porcentaje + "%\n\n" +
-        listado.join("\n\n")
-    );
 }
 
-// ==========================================
-// 8. VALOR TOTAL DEL INVENTARIO - REDUCE()
-// ==========================================
 
-function calcularValorInventario() {
+// Mostrar mensajes en pantalla
 
-    // Sumamos el valor de todos los muebles disponibles
-    const valorTotal = catalogoMuebles.reduce((acumulador, mueble) => {
-        return acumulador + (mueble.precio * mueble.stock);
-    }, 0);
+function mostrarMensaje(texto, tipo = "exito") {
 
-    console.log("Valor total del inventario:", valorTotal);
+    mensaje.textContent = texto;
 
-    alert(
-        "VALOR TOTAL DEL INVENTARIO\n\n" +
-        formatoPrecio(valorTotal)
-    );
+    mensaje.className = "mensaje visible " + tipo;
+
 }
 
+
 // ==========================================
-// 9. SIMULADOR DE PRESUPUESTOS
+// 5. RENDERIZADO DINÁMICO DEL CATÁLOGO
 // ==========================================
 
-function realizarPresupuesto(nombreCliente) {
+function renderizarMuebles() {
 
-    let producto = prompt("¿Qué mueble querés presupuestar?");
+    const busqueda = inputBuscar.value.trim().toLowerCase();
 
-    if (producto === null || producto.trim() === "") {
+    const precioIngresado = inputFiltroPresupuesto.value.trim();
+
+    const precioMaximo = precioIngresado === ""
+        ? Infinity
+        : Number(precioIngresado);
+
+
+    // FILTER: buscar por nombre y precio
+
+    const mueblesFiltrados = catalogoMuebles.filter(mueble => {
+
+        const coincideNombre = mueble.nombre
+            .toLowerCase()
+            .includes(busqueda);
+
+        const coincidePrecio = mueble.precio <= precioMaximo;
+
+        return coincideNombre && coincidePrecio;
+
+    });
+
+
+    // Limpiar contenedor antes de renderizar
+
+    contenedorItems.innerHTML = "";
+
+
+    if (mueblesFiltrados.length === 0) {
+
+        contenedorItems.innerHTML = `
+            <p class="sin-resultados">
+                No encontramos muebles con esos filtros.
+            </p>
+        `;
+
         return;
+
     }
 
-    // Buscamos el objeto dentro del catálogo
-    const muebleSeleccionado = catalogoMuebles.find(mueble =>
-        mueble.nombre.toLowerCase() === producto.trim().toLowerCase()
+
+    // MAP: generar las tarjetas dinámicamente
+
+    contenedorItems.innerHTML = mueblesFiltrados.map(mueble => {
+
+        return `
+
+            <article class="tarjeta-mueble">
+
+                <div class="tarjeta-encabezado">
+
+                    <h3>${escaparHTML(mueble.nombre)}</h3>
+
+                    <span class="categoria">
+                        ${escaparHTML(mueble.categoria)}
+                    </span>
+
+                </div>
+
+                <p class="precio">
+                    ${formatoPrecio(mueble.precio)}
+                </p>
+
+                <p class="stock">
+                    Stock disponible: ${mueble.stock}
+                </p>
+
+                <div class="acciones">
+
+                    <button
+                        type="button"
+                        class="btn btn-secundario btn-presupuestar"
+                        data-id="${mueble.id}"
+                    >
+                        Presupuestar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-eliminar btn-borrar"
+                        data-id="${mueble.id}"
+                    >
+                        Eliminar
+                    </button>
+
+                </div>
+
+            </article>
+
+        `;
+
+    }).join("");
+
+}
+
+
+// ==========================================
+// 6. AGREGAR NUEVOS MUEBLES
+// ==========================================
+
+formularioMueble.addEventListener("submit", function(evento) {
+
+    evento.preventDefault();
+
+
+    const nombre = inputNombre.value.trim();
+
+    const precio = Number(inputPrecio.value);
+
+    const categoria = inputCategoria.value;
+
+    const stock = Number(inputStock.value);
+
+
+    // Validación de datos
+
+    if (
+        nombre === "" ||
+        !Number.isFinite(precio) ||
+        precio <= 0 ||
+        categoria === "" ||
+        !Number.isInteger(stock) ||
+        stock <= 0
+    ) {
+
+        mostrarMensaje(
+            "Completá correctamente todos los campos.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    // Crear ID único
+
+    const nuevoId = catalogoMuebles.reduce((maximo, mueble) => {
+
+        return Math.max(maximo, mueble.id);
+
+    }, 0) + 1;
+
+
+    // Crear nueva instancia de la clase
+
+    const nuevoMueble = new Mueble(
+
+        nuevoId,
+        nombre,
+        precio,
+        categoria,
+        stock
+
     );
+
+
+    // Agregar objeto al array
+
+    catalogoMuebles.push(nuevoMueble);
+
+
+    // Limpiar formulario
+
+    formularioMueble.reset();
+
+
+    // Actualizar interfaz
+
+    renderizarMuebles();
+
+    actualizarSelectorMuebles();
+
+    actualizarInventario();
+
+
+    mostrarMensaje(
+        `El mueble "${nombre}" fue agregado correctamente.`,
+        "exito"
+    );
+
+});
+
+
+// ==========================================
+// 7. ELIMINAR Y SELECCIONAR MUEBLES
+// ==========================================
+
+// Delegación de eventos para botones dinámicos
+
+contenedorItems.addEventListener("click", function(evento) {
+
+    const botonEliminar = evento.target.closest(".btn-borrar");
+
+    const botonPresupuestar = evento.target.closest(".btn-presupuestar");
+
+
+    // ELIMINAR MUEBLE
+
+    if (botonEliminar) {
+
+        const id = Number(botonEliminar.dataset.id);
+
+
+        // FIND: buscar el mueble por ID
+
+        const mueble = catalogoMuebles.find(item => item.id === id);
+
+
+        if (!mueble) {
+
+            return;
+
+        }
+
+
+        // Buscar posición dentro del array
+
+        const indice = catalogoMuebles.findIndex(item => item.id === id);
+
+
+        // Eliminar del array
+
+        catalogoMuebles.splice(indice, 1);
+
+
+        // Actualizar pantalla
+
+        renderizarMuebles();
+
+        actualizarSelectorMuebles();
+
+        actualizarInventario();
+
+        resultadoPresupuesto.innerHTML = "";
+
+
+        mostrarMensaje(
+            `El mueble "${mueble.nombre}" fue eliminado del catálogo.`,
+            "exito"
+        );
+
+    }
+
+
+    // SELECCIONAR MUEBLE PARA PRESUPUESTAR
+
+    if (botonPresupuestar) {
+
+        const id = Number(botonPresupuestar.dataset.id);
+
+
+        seleccionarMueble.value = String(id);
+
+
+        // Llevar al usuario al formulario
+
+        formularioPresupuesto.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+
+        mostrarMensaje(
+            "Mueble seleccionado. Completá los datos para calcular tu presupuesto.",
+            "exito"
+        );
+
+    }
+
+});
+
+
+// ==========================================
+// 8. EVENTOS DE TECLADO - BUSCADORES
+// ==========================================
+
+// Filtrar mientras el usuario escribe
+
+inputBuscar.addEventListener("input", function() {
+
+    renderizarMuebles();
+
+});
+
+
+// Filtrar por presupuesto máximo
+
+inputFiltroPresupuesto.addEventListener("input", function() {
+
+    renderizarMuebles();
+
+});
+
+
+// ==========================================
+// 9. ACTUALIZAR SELECTOR DE MUEBLES
+// ==========================================
+
+function actualizarSelectorMuebles() {
+
+    const seleccionAnterior = seleccionarMueble.value;
+
+
+    seleccionarMueble.innerHTML = `
+        <option value="">Seleccionar mueble</option>
+    `;
+
+
+    catalogoMuebles.forEach(mueble => {
+
+        const opcion = document.createElement("option");
+
+        opcion.value = mueble.id;
+
+        opcion.textContent = `
+            ${mueble.nombre} - ${formatoPrecio(mueble.precio)}
+        `;
+
+        seleccionarMueble.appendChild(opcion);
+
+    });
+
+
+    // Mantener selección si el mueble todavía existe
+
+    const existeSeleccion = catalogoMuebles.some(mueble => {
+
+        return String(mueble.id) === seleccionAnterior;
+
+    });
+
+
+    if (existeSeleccion) {
+
+        seleccionarMueble.value = seleccionAnterior;
+
+    }
+
+}
+
+
+// ==========================================
+// 10. CALCULAR PRESUPUESTO
+// ==========================================
+
+formularioPresupuesto.addEventListener("submit", function(evento) {
+
+    evento.preventDefault();
+
+
+    const nombreCliente = inputCliente.value.trim();
+
+    const idMueble = Number(seleccionarMueble.value);
+
+    const cantidad = Number(inputCantidad.value);
+
+
+    // FIND: localizar mueble seleccionado
+
+    const muebleSeleccionado = catalogoMuebles.find(mueble => {
+
+        return mueble.id === idMueble;
+
+    });
+
+
+    // Validaciones
+
+    if (nombreCliente === "") {
+
+        mostrarMensaje(
+            "Ingresá el nombre del cliente.",
+            "error"
+        );
+
+        return;
+
+    }
+
 
     if (!muebleSeleccionado) {
-        alert("El mueble solicitado no está disponible.");
+
+        mostrarMensaje(
+            "Seleccioná un mueble válido.",
+            "error"
+        );
+
         return;
+
     }
 
-    let cantidadIngresada = prompt(
-        "¿Cuántas unidades de " + muebleSeleccionado.nombre + " querés?"
-    );
-
-    if (cantidadIngresada === null || cantidadIngresada.trim() === "") {
-        return;
-    }
-
-    const cantidad = Number(cantidadIngresada);
 
     if (!Number.isInteger(cantidad) || cantidad <= 0) {
-        alert("Ingresá una cantidad entera positiva.");
+
+        mostrarMensaje(
+            "Ingresá una cantidad válida.",
+            "error"
+        );
+
         return;
+
     }
+
 
     if (cantidad > muebleSeleccionado.stock) {
-        alert(
-            "Stock insuficiente.\n" +
-            "Stock disponible: " + muebleSeleccionado.stock
+
+        mostrarMensaje(
+            `Stock insuficiente. Solo hay ${muebleSeleccionado.stock} unidades disponibles.`,
+            "error"
         );
+
         return;
+
     }
 
-    // Calculamos el presupuesto utilizando el método de la clase
+
+    // Calcular valores
+
     const total = muebleSeleccionado.calcularPrecio(cantidad);
+
     const anticipo = calcularAnticipo(total);
+
+    const saldo = total - anticipo;
+
     const clasificacion = clasificarPresupuesto(total);
 
-    console.log("Cliente:", nombreCliente);
-    console.log("Mueble seleccionado:", muebleSeleccionado);
-    console.log("Cantidad:", cantidad);
-    console.log("Total:", total);
-    console.log("Anticipo:", anticipo);
-    console.log("Clasificación:", clasificacion);
 
-    alert(
-        "PRESUPUESTO DE MUEBLES\n\n" +
-        "Cliente: " + nombreCliente +
-        "\nMueble: " + muebleSeleccionado.nombre +
-        "\nCantidad: " + cantidad +
-        "\nPrecio unitario: " + formatoPrecio(muebleSeleccionado.precio) +
-        "\n\nTOTAL: " + formatoPrecio(total) +
-        "\nANTICIPO DEL 50%: " + formatoPrecio(anticipo) +
-        "\nClasificación: " + clasificacion
+    // Mostrar presupuesto utilizando DOM
+
+    resultadoPresupuesto.innerHTML = `
+
+        <div class="resultado">
+
+            <h3>Presupuesto generado</h3>
+
+            <p>
+                <strong>Cliente:</strong>
+                ${escaparHTML(nombreCliente)}
+            </p>
+
+            <p>
+                <strong>Mueble:</strong>
+                ${escaparHTML(muebleSeleccionado.nombre)}
+            </p>
+
+            <p>
+                <strong>Cantidad:</strong>
+                ${cantidad}
+            </p>
+
+            <p>
+                <strong>Precio unitario:</strong>
+                ${formatoPrecio(muebleSeleccionado.precio)}
+            </p>
+
+            <hr>
+
+            <p class="total">
+                Total: ${formatoPrecio(total)}
+            </p>
+
+            <p>
+                <strong>Anticipo del 50%:</strong>
+                ${formatoPrecio(anticipo)}
+            </p>
+
+            <p>
+                <strong>Saldo restante:</strong>
+                ${formatoPrecio(saldo)}
+            </p>
+
+            <p>
+                <strong>Clasificación:</strong>
+                ${clasificacion}
+            </p>
+
+        </div>
+
+    `;
+
+
+    mostrarMensaje(
+        "El presupuesto fue calculado correctamente.",
+        "exito"
     );
+
+});
+
+
+// ==========================================
+// 11. RESUMEN DEL INVENTARIO
+// ==========================================
+
+function actualizarInventario() {
+
+    // REDUCE: calcular valor total del inventario
+
+    const valorTotal = catalogoMuebles.reduce((acumulador, mueble) => {
+
+        return acumulador + (mueble.precio * mueble.stock);
+
+    }, 0);
+
+
+    // REDUCE: calcular cantidad de unidades
+
+    const unidadesTotales = catalogoMuebles.reduce((acumulador, mueble) => {
+
+        return acumulador + mueble.stock;
+
+    }, 0);
+
+
+    resumenInventario.innerHTML = `
+
+        <div class="inventario">
+
+            <div class="dato-inventario">
+
+                <h3>Productos diferentes</h3>
+
+                <p>${catalogoMuebles.length}</p>
+
+            </div>
+
+            <div class="dato-inventario">
+
+                <h3>Unidades disponibles</h3>
+
+                <p>${unidadesTotales}</p>
+
+            </div>
+
+            <div class="dato-inventario">
+
+                <h3>Valor total del inventario</h3>
+
+                <p>${formatoPrecio(valorTotal)}</p>
+
+            </div>
+
+        </div>
+
+    `;
+
 }
 
-// ==========================================
-// 10. MENÚ PRINCIPAL INTERACTIVO
-// ==========================================
-
-function iniciarSimulador() {
-
-    let nombreCliente = prompt("¡Bienvenido al simulador de muebles!\n¿Cuál es tu nombre?");
-
-    if (nombreCliente === null || nombreCliente.trim() === "") {
-        nombreCliente = "Cliente";
-    }
-
-    let continuar = true;
-
-    while (continuar) {
-
-        const opcion = prompt(
-            "SIMULADOR DE PRESUPUESTOS DE MUEBLES\n\n" +
-            "Hola " + nombreCliente + ", elegí una opción:\n\n" +
-            "1 - Mostrar catálogo de muebles\n" +
-            "2 - Buscar un mueble por nombre\n" +
-            "3 - Filtrar muebles por presupuesto\n" +
-            "4 - Simular descuentos\n" +
-            "5 - Calcular valor total del inventario\n" +
-            "6 - Realizar un presupuesto\n" +
-            "0 - Salir\n\n" +
-            "Ingresá el número de la opción:"
-        );
-
-        switch (opcion) {
-
-            case "1":
-                mostrarCatalogo();
-                break;
-
-            case "2":
-                buscarMueble();
-                break;
-
-            case "3":
-                filtrarPorPresupuesto();
-                break;
-
-            case "4":
-                simularDescuentos();
-                break;
-
-            case "5":
-                calcularValorInventario();
-                break;
-
-            case "6":
-                realizarPresupuesto(nombreCliente);
-                break;
-
-            case "0":
-            case null:
-                continuar = false;
-                alert("¡Gracias por utilizar nuestro simulador de muebles!");
-                break;
-
-            default:
-                alert("Opción incorrecta. Elegí un número del 0 al 6.");
-                break;
-        }
-    }
-}
 
 // ==========================================
-// 11. EJECUCIÓN DEL SIMULADOR
+// 12. INICIALIZACIÓN
 // ==========================================
 
-console.log("PRE-ENTREGA 6 - FUNCIONES DE ORDEN SUPERIOR");
-console.log("Catálogo de objetos:", catalogoMuebles);
+// Mostrar catálogo al cargar la página
 
-iniciarSimulador();
+renderizarMuebles();
+
+actualizarSelectorMuebles();
+
+actualizarInventario();

@@ -1,20 +1,204 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>clase 01</title>
+
+    <title>Simulador de Presupuestos de Muebles</title>
+
+    <link rel="stylesheet" href="./css/style.css">
+
     <script src="./js/main.js" defer></script>
 </head>
+
 <body>
 
+    <header class="header">
+        <div class="contenedor">
+            <h1>Simulador de Presupuestos</h1>
+            <p>Elegí tus muebles y calculá tu presupuesto al instante.</p>
+        </div>
+    </header>
 
-    <h1>Simulador de Presupuesto</h1>
-    <p>Calculá el presupuesto de tu mueble.</p>
+    <main class="contenedor">
 
+        <!-- MENSAJES VISUALES -->
 
+        <div id="mensaje" class="mensaje" role="status" aria-live="polite"></div>
 
+        <!-- AGREGAR MUEBLES -->
 
+        <section class="seccion">
+
+            <h2>Agregar nuevo mueble</h2>
+
+            <form id="formulario-mueble">
+
+                <div class="form-grid">
+
+                    <div>
+                        <label for="nombre-mueble">Nombre</label>
+                        <input
+                            type="text"
+                            id="nombre-mueble"
+                            placeholder="Ej: Mesa ratona"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="precio-mueble">Precio</label>
+                        <input
+                            type="number"
+                            id="precio-mueble"
+                            placeholder="Ej: 150000"
+                            min="1"
+                            step="0.01"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="categoria-mueble">Categoría</label>
+
+                        <select id="categoria-mueble" required>
+                            <option value="">Seleccionar</option>
+                            <option value="Comedor">Comedor</option>
+                            <option value="Living">Living</option>
+                            <option value="Dormitorio">Dormitorio</option>
+                            <option value="Oficina">Oficina</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="stock-mueble">Stock</label>
+                        <input
+                            type="number"
+                            id="stock-mueble"
+                            placeholder="Ej: 10"
+                            min="1"
+                            step="1"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn btn-principal">
+                    + Agregar mueble
+                </button>
+
+            </form>
+
+        </section>
+
+        <!-- CATÁLOGO -->
+
+        <section class="seccion">
+
+            <h2>Catálogo de muebles</h2>
+
+            <div class="filtros">
+
+                <div>
+                    <label for="buscar-mueble">Buscar mueble</label>
+
+                    <input
+                        type="search"
+                        id="buscar-mueble"
+                        placeholder="Escribí el nombre..."
+                    >
+                </div>
+
+                <div>
+                    <label for="filtro-presupuesto">Precio máximo</label>
+
+                    <input
+                        type="number"
+                        id="filtro-presupuesto"
+                        placeholder="Ej: 250000"
+                        min="0"
+                    >
+                </div>
+
+            </div>
+
+            <div id="contenedor-items" class="catalogo"></div>
+
+        </section>
+
+        <!-- SIMULADOR -->
+
+        <section class="seccion">
+
+            <h2>Calculá tu presupuesto</h2>
+
+            <form id="formulario-presupuesto">
+
+                <div class="form-grid">
+
+                    <div>
+                        <label for="nombre-cliente">Nombre del cliente</label>
+
+                        <input
+                            type="text"
+                            id="nombre-cliente"
+                            placeholder="Ingresá tu nombre"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="seleccionar-mueble">Seleccionar mueble</label>
+
+                        <select id="seleccionar-mueble" required>
+                            <option value="">Seleccionar mueble</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="cantidad-mueble">Cantidad</label>
+
+                        <input
+                            type="number"
+                            id="cantidad-mueble"
+                            min="1"
+                            step="1"
+                            value="1"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn btn-principal">
+                    Calcular presupuesto
+                </button>
+
+            </form>
+
+            <div id="resultado-presupuesto"></div>
+
+        </section>
+
+        <!-- INVENTARIO -->
+
+        <section class="seccion">
+
+            <h2>Resumen del inventario</h2>
+
+            <div id="resumen-inventario"></div>
+
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>Simulador de Presupuestos de Muebles | Proyecto JavaScript - Coderhouse</p>
+    </footer>
 
 </body>
+
 </html>
