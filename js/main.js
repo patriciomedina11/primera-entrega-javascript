@@ -1,6 +1,6 @@
 // ==========================================
-// PRE-ENTREGA 7
-// INTERFAZ DINÁMICA CON DOM Y EVENTOS
+// PRE-ENTREGA 8
+// SINCRONIZACIÓN ENTRE DOM Y LOCALSTORAGE
 // SIMULADOR DE PRESUPUESTOS DE MUEBLES
 // ==========================================
 
@@ -12,35 +12,29 @@
 class Mueble {
 
     constructor(id, nombre, precio, categoria, stock) {
-
         this.id = id;
         this.nombre = nombre;
         this.precio = precio;
         this.categoria = categoria;
         this.stock = stock;
-
     }
 
     calcularPrecio(cantidad) {
-
         return this.precio * cantidad;
-
     }
 
     aplicarDescuento(porcentaje) {
-
         return this.precio - (this.precio * porcentaje / 100);
-
     }
 
 }
 
 
 // ==========================================
-// 2. ARRAY DE OBJETOS
+// 2. CATÁLOGO INICIAL
 // ==========================================
 
-const catalogoMuebles = [
+const mueblesIniciales = [
 
     new Mueble(1, "Mesa", 250000, "Comedor", 10),
 
@@ -56,7 +50,116 @@ const catalogoMuebles = [
 
 
 // ==========================================
-// 3. SELECCIÓN DE ELEMENTOS DEL DOM
+// 3. LOCALSTORAGE
+// ==========================================
+
+// Clave utilizada para guardar los muebles
+
+const CLAVE_STORAGE = "catalogoMuebles";
+
+
+// Recuperar información almacenada
+
+function cargarMuebles() {
+
+    const datosGuardados = localStorage.getItem(CLAVE_STORAGE);
+
+    // Operador ternario y nullish coalescing
+    // Si nunca se guardaron datos, usamos el catálogo inicial
+
+    let mueblesRecuperados;
+
+    try {
+
+        mueblesRecuperados = datosGuardados !== null
+            ? JSON.parse(datosGuardados)
+            : mueblesIniciales;
+
+    } catch (error) {
+
+        mueblesRecuperados = mueblesIniciales;
+
+    }
+
+    // Operador ?? para manejar valores inexistentes
+
+    mueblesRecuperados = mueblesRecuperados ?? mueblesIniciales;
+
+    // Validar que los datos sean un array
+
+    if (!Array.isArray(mueblesRecuperados)) {
+        mueblesRecuperados = mueblesIniciales;
+    }
+
+    // Reconstruir instancias de la clase Mueble
+    // JSON.parse no recupera automáticamente los métodos
+
+    return mueblesRecuperados
+        .filter(mueble =>
+            mueble !== null &&
+            typeof mueble === "object" &&
+            Number.isInteger(mueble.id) &&
+            typeof mueble.nombre === "string" &&
+            mueble.nombre.trim() !== "" &&
+            Number.isFinite(mueble.precio) &&
+            mueble.precio > 0 &&
+            typeof mueble.categoria === "string" &&
+            Number.isInteger(mueble.stock) &&
+            mueble.stock >= 0
+        )
+        .map(mueble => {
+
+            // Destructuring de objetos
+
+            const {
+                id,
+                nombre,
+                precio,
+                categoria,
+                stock
+            } = mueble;
+
+            return new Mueble(
+                id,
+                nombre,
+                precio,
+                categoria,
+                stock
+            );
+
+        });
+
+}
+
+
+// Array principal de la aplicación
+
+const catalogoMuebles = cargarMuebles();
+
+
+// Guardar catálogo actualizado
+
+function guardarMuebles() {
+
+    localStorage.setItem(
+        CLAVE_STORAGE,
+        JSON.stringify(catalogoMuebles)
+    );
+
+}
+
+
+// Guardar estado inicial si todavía no existe
+
+if (localStorage.getItem(CLAVE_STORAGE) === null) {
+
+    guardarMuebles();
+
+}
+
+
+// ==========================================
+// 4. SELECCIÓN DE ELEMENTOS DEL DOM
 // ==========================================
 
 const formularioMueble = document.getElementById("formulario-mueble");
@@ -91,10 +194,8 @@ const resumenInventario = document.getElementById("resumen-inventario");
 
 
 // ==========================================
-// 4. FUNCIONES GENERALES
+// 5. FUNCIONES GENERALES
 // ==========================================
-
-// Formatear precios en pesos argentinos
 
 function formatoPrecio(valor) {
 
@@ -106,8 +207,6 @@ function formatoPrecio(valor) {
 }
 
 
-// Calcular anticipo del 50%
-
 function calcularAnticipo(total) {
 
     return total * 0.5;
@@ -115,28 +214,18 @@ function calcularAnticipo(total) {
 }
 
 
-// Clasificar presupuesto
-
 function clasificarPresupuesto(total) {
 
-    if (total >= 1000000) {
-
-        return "Presupuesto grande";
-
-    } else if (total >= 500000) {
-
-        return "Presupuesto mediano";
-
-    } else {
-
-        return "Presupuesto pequeño";
-
-    }
+    return total >= 1000000
+        ? "Presupuesto grande"
+        : total >= 500000
+            ? "Presupuesto mediano"
+            : "Presupuesto pequeño";
 
 }
 
 
-// Evitar que los datos ingresados se interpreten como HTML
+// Evitar interpretar datos del usuario como HTML
 
 function escaparHTML(texto) {
 
@@ -157,19 +246,19 @@ function escaparHTML(texto) {
 }
 
 
-// Mostrar mensajes en pantalla
+// Feedback visual mediante DOM
 
 function mostrarMensaje(texto, tipo = "exito") {
 
     mensaje.textContent = texto;
 
-    mensaje.className = "mensaje visible " + tipo;
+    mensaje.className = `mensaje visible ${tipo}`;
 
 }
 
 
 // ==========================================
-// 5. RENDERIZADO DINÁMICO DEL CATÁLOGO
+// 6. RENDERIZADO DINÁMICO
 // ==========================================
 
 function renderizarMuebles() {
@@ -178,12 +267,14 @@ function renderizarMuebles() {
 
     const precioIngresado = inputFiltroPresupuesto.value.trim();
 
+    // Operador ternario
+
     const precioMaximo = precioIngresado === ""
         ? Infinity
         : Number(precioIngresado);
 
 
-    // FILTER: buscar por nombre y precio
+    // Filtrar muebles
 
     const mueblesFiltrados = catalogoMuebles.filter(mueble => {
 
@@ -198,10 +289,7 @@ function renderizarMuebles() {
     });
 
 
-    // Limpiar contenedor antes de renderizar
-
-    contenedorItems.innerHTML = "";
-
+    // Mostrar resultados en pantalla
 
     if (mueblesFiltrados.length === 0) {
 
@@ -216,9 +304,17 @@ function renderizarMuebles() {
     }
 
 
-    // MAP: generar las tarjetas dinámicamente
+    // Destructuring y MAP
 
     contenedorItems.innerHTML = mueblesFiltrados.map(mueble => {
+
+        const {
+            id,
+            nombre,
+            precio,
+            categoria,
+            stock
+        } = mueble;
 
         return `
 
@@ -226,20 +322,20 @@ function renderizarMuebles() {
 
                 <div class="tarjeta-encabezado">
 
-                    <h3>${escaparHTML(mueble.nombre)}</h3>
+                    <h3>${escaparHTML(nombre)}</h3>
 
                     <span class="categoria">
-                        ${escaparHTML(mueble.categoria)}
+                        ${escaparHTML(categoria)}
                     </span>
 
                 </div>
 
                 <p class="precio">
-                    ${formatoPrecio(mueble.precio)}
+                    ${formatoPrecio(precio)}
                 </p>
 
                 <p class="stock">
-                    Stock disponible: ${mueble.stock}
+                    Stock disponible: ${stock}
                 </p>
 
                 <div class="acciones">
@@ -247,7 +343,7 @@ function renderizarMuebles() {
                     <button
                         type="button"
                         class="btn btn-secundario btn-presupuestar"
-                        data-id="${mueble.id}"
+                        data-id="${id}"
                     >
                         Presupuestar
                     </button>
@@ -255,7 +351,7 @@ function renderizarMuebles() {
                     <button
                         type="button"
                         class="btn btn-eliminar btn-borrar"
-                        data-id="${mueble.id}"
+                        data-id="${id}"
                     >
                         Eliminar
                     </button>
@@ -272,7 +368,22 @@ function renderizarMuebles() {
 
 
 // ==========================================
-// 6. AGREGAR NUEVOS MUEBLES
+// 7. ACTUALIZAR TODA LA INTERFAZ
+// ==========================================
+
+function actualizarInterfaz() {
+
+    renderizarMuebles();
+
+    actualizarSelectorMuebles();
+
+    actualizarInventario();
+
+}
+
+
+// ==========================================
+// 8. AGREGAR MUEBLES
 // ==========================================
 
 formularioMueble.addEventListener("submit", function(evento) {
@@ -288,8 +399,6 @@ formularioMueble.addEventListener("submit", function(evento) {
 
     const stock = Number(inputStock.value);
 
-
-    // Validación de datos
 
     if (
         nombre === "" ||
@@ -310,7 +419,7 @@ formularioMueble.addEventListener("submit", function(evento) {
     }
 
 
-    // Crear ID único
+    // Obtener un ID único
 
     const nuevoId = catalogoMuebles.reduce((maximo, mueble) => {
 
@@ -319,22 +428,30 @@ formularioMueble.addEventListener("submit", function(evento) {
     }, 0) + 1;
 
 
-    // Crear nueva instancia de la clase
+    // Crear objeto
 
     const nuevoMueble = new Mueble(
-
         nuevoId,
         nombre,
         precio,
         categoria,
         stock
-
     );
 
 
-    // Agregar objeto al array
+    // Actualizar array
 
     catalogoMuebles.push(nuevoMueble);
+
+
+    // Guardar cambios en localStorage
+
+    guardarMuebles();
+
+
+    // Actualizar DOM
+
+    actualizarInterfaz();
 
 
     // Limpiar formulario
@@ -342,17 +459,8 @@ formularioMueble.addEventListener("submit", function(evento) {
     formularioMueble.reset();
 
 
-    // Actualizar interfaz
-
-    renderizarMuebles();
-
-    actualizarSelectorMuebles();
-
-    actualizarInventario();
-
-
     mostrarMensaje(
-        `El mueble "${nombre}" fue agregado correctamente.`,
+        `El mueble "${nombre}" fue agregado y guardado correctamente.`,
         "exito"
     );
 
@@ -360,10 +468,8 @@ formularioMueble.addEventListener("submit", function(evento) {
 
 
 // ==========================================
-// 7. ELIMINAR Y SELECCIONAR MUEBLES
+// 9. ELIMINAR Y SELECCIONAR MUEBLES
 // ==========================================
-
-// Delegación de eventos para botones dinámicos
 
 contenedorItems.addEventListener("click", function(evento) {
 
@@ -372,28 +478,30 @@ contenedorItems.addEventListener("click", function(evento) {
     const botonPresupuestar = evento.target.closest(".btn-presupuestar");
 
 
-    // ELIMINAR MUEBLE
+    // ELIMINAR
 
     if (botonEliminar) {
 
         const id = Number(botonEliminar.dataset.id);
 
+        const indice = catalogoMuebles.findIndex(mueble => {
+            return mueble.id === id;
+        });
 
-        // FIND: buscar el mueble por ID
 
-        const mueble = catalogoMuebles.find(item => item.id === id);
+        if (indice === -1) {
 
-
-        if (!mueble) {
+            mostrarMensaje(
+                "No encontramos el mueble seleccionado.",
+                "error"
+            );
 
             return;
 
         }
 
 
-        // Buscar posición dentro del array
-
-        const indice = catalogoMuebles.findIndex(item => item.id === id);
+        const nombreEliminado = catalogoMuebles[indice].nombre;
 
 
         // Eliminar del array
@@ -401,36 +509,56 @@ contenedorItems.addEventListener("click", function(evento) {
         catalogoMuebles.splice(indice, 1);
 
 
-        // Actualizar pantalla
+        // Actualizar localStorage
 
-        renderizarMuebles();
+        guardarMuebles();
 
-        actualizarSelectorMuebles();
 
-        actualizarInventario();
+        // Actualizar DOM
+
+        actualizarInterfaz();
+
 
         resultadoPresupuesto.innerHTML = "";
 
 
         mostrarMensaje(
-            `El mueble "${mueble.nombre}" fue eliminado del catálogo.`,
+            `El mueble "${nombreEliminado}" fue eliminado correctamente.`,
             "exito"
         );
+
+        return;
 
     }
 
 
-    // SELECCIONAR MUEBLE PARA PRESUPUESTAR
+    // PRESUPUESTAR
 
     if (botonPresupuestar) {
 
         const id = Number(botonPresupuestar.dataset.id);
 
+        const muebleSeleccionado = catalogoMuebles.find(mueble => {
+            return mueble.id === id;
+        });
+
+
+        // Optional chaining
+
+        if (!muebleSeleccionado?.id) {
+
+            mostrarMensaje(
+                "El mueble seleccionado ya no está disponible.",
+                "error"
+            );
+
+            return;
+
+        }
+
 
         seleccionarMueble.value = String(id);
 
-
-        // Llevar al usuario al formulario
 
         formularioPresupuesto.scrollIntoView({
             behavior: "smooth",
@@ -439,7 +567,7 @@ contenedorItems.addEventListener("click", function(evento) {
 
 
         mostrarMensaje(
-            "Mueble seleccionado. Completá los datos para calcular tu presupuesto.",
+            "Mueble seleccionado. Completá los datos del presupuesto.",
             "exito"
         );
 
@@ -449,10 +577,8 @@ contenedorItems.addEventListener("click", function(evento) {
 
 
 // ==========================================
-// 8. EVENTOS DE TECLADO - BUSCADORES
+// 10. EVENTOS DE TECLADO
 // ==========================================
-
-// Filtrar mientras el usuario escribe
 
 inputBuscar.addEventListener("input", function() {
 
@@ -460,8 +586,6 @@ inputBuscar.addEventListener("input", function() {
 
 });
 
-
-// Filtrar por presupuesto máximo
 
 inputFiltroPresupuesto.addEventListener("input", function() {
 
@@ -471,7 +595,7 @@ inputFiltroPresupuesto.addEventListener("input", function() {
 
 
 // ==========================================
-// 9. ACTUALIZAR SELECTOR DE MUEBLES
+// 11. SELECTOR DE MUEBLES
 // ==========================================
 
 function actualizarSelectorMuebles() {
@@ -490,16 +614,12 @@ function actualizarSelectorMuebles() {
 
         opcion.value = mueble.id;
 
-        opcion.textContent = `
-            ${mueble.nombre} - ${formatoPrecio(mueble.precio)}
-        `;
+        opcion.textContent = `${mueble.nombre} - ${formatoPrecio(mueble.precio)}`;
 
         seleccionarMueble.appendChild(opcion);
 
     });
 
-
-    // Mantener selección si el mueble todavía existe
 
     const existeSeleccion = catalogoMuebles.some(mueble => {
 
@@ -508,17 +628,15 @@ function actualizarSelectorMuebles() {
     });
 
 
-    if (existeSeleccion) {
-
-        seleccionarMueble.value = seleccionAnterior;
-
-    }
+    seleccionarMueble.value = existeSeleccion
+        ? seleccionAnterior
+        : "";
 
 }
 
 
 // ==========================================
-// 10. CALCULAR PRESUPUESTO
+// 12. CALCULAR PRESUPUESTO
 // ==========================================
 
 formularioPresupuesto.addEventListener("submit", function(evento) {
@@ -533,16 +651,12 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
     const cantidad = Number(inputCantidad.value);
 
 
-    // FIND: localizar mueble seleccionado
-
     const muebleSeleccionado = catalogoMuebles.find(mueble => {
 
         return mueble.id === idMueble;
 
     });
 
-
-    // Validaciones
 
     if (nombreCliente === "") {
 
@@ -583,7 +697,7 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
     if (cantidad > muebleSeleccionado.stock) {
 
         mostrarMensaje(
-            `Stock insuficiente. Solo hay ${muebleSeleccionado.stock} unidades disponibles.`,
+            `Stock insuficiente. Hay ${muebleSeleccionado.stock} unidades disponibles.`,
             "error"
         );
 
@@ -591,8 +705,6 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
 
     }
 
-
-    // Calcular valores
 
     const total = muebleSeleccionado.calcularPrecio(cantidad);
 
@@ -603,7 +715,13 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
     const clasificacion = clasificarPresupuesto(total);
 
 
-    // Mostrar presupuesto utilizando DOM
+    // Destructuring
+
+    const {
+        nombre,
+        precio
+    } = muebleSeleccionado;
+
 
     resultadoPresupuesto.innerHTML = `
 
@@ -618,7 +736,7 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
 
             <p>
                 <strong>Mueble:</strong>
-                ${escaparHTML(muebleSeleccionado.nombre)}
+                ${escaparHTML(nombre)}
             </p>
 
             <p>
@@ -628,7 +746,7 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
 
             <p>
                 <strong>Precio unitario:</strong>
-                ${formatoPrecio(muebleSeleccionado.precio)}
+                ${formatoPrecio(precio)}
             </p>
 
             <hr>
@@ -666,12 +784,10 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
 
 
 // ==========================================
-// 11. RESUMEN DEL INVENTARIO
+// 13. INVENTARIO
 // ==========================================
 
 function actualizarInventario() {
-
-    // REDUCE: calcular valor total del inventario
 
     const valorTotal = catalogoMuebles.reduce((acumulador, mueble) => {
 
@@ -679,8 +795,6 @@ function actualizarInventario() {
 
     }, 0);
 
-
-    // REDUCE: calcular cantidad de unidades
 
     const unidadesTotales = catalogoMuebles.reduce((acumulador, mueble) => {
 
@@ -725,13 +839,9 @@ function actualizarInventario() {
 
 
 // ==========================================
-// 12. INICIALIZACIÓN
+// 14. INICIALIZACIÓN
 // ==========================================
 
-// Mostrar catálogo al cargar la página
+// Mostrar los datos recuperados de localStorage
 
-renderizarMuebles();
-
-actualizarSelectorMuebles();
-
-actualizarInventario();
+actualizarInterfaz();
