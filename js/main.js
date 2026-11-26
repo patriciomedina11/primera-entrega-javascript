@@ -1,6 +1,6 @@
 // ==========================================
-// PRE-ENTREGA 8
-// SINCRONIZACIÓN ENTRE DOM Y LOCALSTORAGE
+// PRE-ENTREGA 9
+// ASINCRONISMO Y PROMESAS
 // SIMULADOR DE PRESUPUESTOS DE MUEBLES
 // ==========================================
 
@@ -53,91 +53,66 @@ const mueblesIniciales = [
 // 3. LOCALSTORAGE
 // ==========================================
 
-// Clave utilizada para guardar los muebles
-
 const CLAVE_STORAGE = "catalogoMuebles";
 
+let catalogoMuebles = [];
 
-// Recuperar información almacenada
+let catalogoCargado = false;
+
+
+// Recuperar muebles guardados
 
 function cargarMuebles() {
 
     const datosGuardados = localStorage.getItem(CLAVE_STORAGE);
 
-    // Operador ternario y nullish coalescing
-    // Si nunca se guardaron datos, usamos el catálogo inicial
-
-    let mueblesRecuperados;
-
-    try {
-
-        mueblesRecuperados = datosGuardados !== null
-            ? JSON.parse(datosGuardados)
-            : mueblesIniciales;
-
-    } catch (error) {
-
-        mueblesRecuperados = mueblesIniciales;
-
-    }
-
-    // Operador ?? para manejar valores inexistentes
+    let mueblesRecuperados = datosGuardados !== null
+        ? JSON.parse(datosGuardados)
+        : mueblesIniciales;
 
     mueblesRecuperados = mueblesRecuperados ?? mueblesIniciales;
 
-    // Validar que los datos sean un array
-
     if (!Array.isArray(mueblesRecuperados)) {
-        mueblesRecuperados = mueblesIniciales;
+        throw new Error("El catálogo almacenado no es válido.");
     }
 
-    // Reconstruir instancias de la clase Mueble
-    // JSON.parse no recupera automáticamente los métodos
+    return mueblesRecuperados.map(mueble => {
 
-    return mueblesRecuperados
-        .filter(mueble =>
-            mueble !== null &&
-            typeof mueble === "object" &&
-            Number.isInteger(mueble.id) &&
-            typeof mueble.nombre === "string" &&
-            mueble.nombre.trim() !== "" &&
-            Number.isFinite(mueble.precio) &&
-            mueble.precio > 0 &&
-            typeof mueble.categoria === "string" &&
-            Number.isInteger(mueble.stock) &&
-            mueble.stock >= 0
-        )
-        .map(mueble => {
+        const {
+            id,
+            nombre,
+            precio,
+            categoria,
+            stock
+        } = mueble;
 
-            // Destructuring de objetos
+        if (
+            !Number.isInteger(id) ||
+            typeof nombre !== "string" ||
+            nombre.trim() === "" ||
+            !Number.isFinite(precio) ||
+            precio <= 0 ||
+            typeof categoria !== "string" ||
+            !Number.isInteger(stock) ||
+            stock < 0
+        ) {
+            throw new Error("Se encontró un mueble con datos inválidos.");
+        }
 
-            const {
-                id,
-                nombre,
-                precio,
-                categoria,
-                stock
-            } = mueble;
+        return new Mueble(
+            id,
+            nombre,
+            precio,
+            categoria,
+            stock
+        );
 
-            return new Mueble(
-                id,
-                nombre,
-                precio,
-                categoria,
-                stock
-            );
-
-        });
+    });
 
 }
 
 
-// Array principal de la aplicación
-
-const catalogoMuebles = cargarMuebles();
-
-
-// Guardar catálogo actualizado
+// Guardar cambios
 
 function guardarMuebles() {
 
@@ -149,17 +124,8 @@ function guardarMuebles() {
 }
 
 
-// Guardar estado inicial si todavía no existe
-
-if (localStorage.getItem(CLAVE_STORAGE) === null) {
-
-    guardarMuebles();
-
-}
-
-
 // ==========================================
-// 4. SELECCIÓN DE ELEMENTOS DEL DOM
+// 4. ELEMENTOS DEL DOM
 // ==========================================
 
 const formularioMueble = document.getElementById("formulario-mueble");
@@ -179,6 +145,8 @@ const inputBuscar = document.getElementById("buscar-mueble");
 const inputFiltroPresupuesto = document.getElementById("filtro-presupuesto");
 
 const mensaje = document.getElementById("mensaje");
+
+const estadoCarga = document.getElementById("estado-carga");
 
 const formularioPresupuesto = document.getElementById("formulario-presupuesto");
 
@@ -246,7 +214,7 @@ function escaparHTML(texto) {
 }
 
 
-// Feedback visual mediante DOM
+// Mostrar mensajes en el DOM
 
 function mostrarMensaje(texto, tipo = "exito") {
 
@@ -267,14 +235,10 @@ function renderizarMuebles() {
 
     const precioIngresado = inputFiltroPresupuesto.value.trim();
 
-    // Operador ternario
-
     const precioMaximo = precioIngresado === ""
         ? Infinity
         : Number(precioIngresado);
 
-
-    // Filtrar muebles
 
     const mueblesFiltrados = catalogoMuebles.filter(mueble => {
 
@@ -289,8 +253,6 @@ function renderizarMuebles() {
     });
 
 
-    // Mostrar resultados en pantalla
-
     if (mueblesFiltrados.length === 0) {
 
         contenedorItems.innerHTML = `
@@ -303,8 +265,6 @@ function renderizarMuebles() {
 
     }
 
-
-    // Destructuring y MAP
 
     contenedorItems.innerHTML = mueblesFiltrados.map(mueble => {
 
@@ -368,7 +328,7 @@ function renderizarMuebles() {
 
 
 // ==========================================
-// 7. ACTUALIZAR TODA LA INTERFAZ
+// 7. ACTUALIZAR INTERFAZ
 // ==========================================
 
 function actualizarInterfaz() {
@@ -390,6 +350,10 @@ formularioMueble.addEventListener("submit", function(evento) {
 
     evento.preventDefault();
 
+    if (!catalogoCargado) {
+        mostrarMensaje("Esperá a que termine la carga del catálogo.", "error");
+        return;
+    }
 
     const nombre = inputNombre.value.trim();
 
@@ -419,16 +383,12 @@ formularioMueble.addEventListener("submit", function(evento) {
     }
 
 
-    // Obtener un ID único
-
     const nuevoId = catalogoMuebles.reduce((maximo, mueble) => {
 
         return Math.max(maximo, mueble.id);
 
     }, 0) + 1;
 
-
-    // Crear objeto
 
     const nuevoMueble = new Mueble(
         nuevoId,
@@ -439,30 +399,33 @@ formularioMueble.addEventListener("submit", function(evento) {
     );
 
 
-    // Actualizar array
+    try {
 
-    catalogoMuebles.push(nuevoMueble);
+        catalogoMuebles.push(nuevoMueble);
 
+        guardarMuebles();
 
-    // Guardar cambios en localStorage
+        actualizarInterfaz();
 
-    guardarMuebles();
+        formularioMueble.reset();
 
+        mostrarMensaje(
+            `El mueble "${nombre}" fue agregado y guardado correctamente.`,
+            "exito"
+        );
 
-    // Actualizar DOM
+    } catch (error) {
 
-    actualizarInterfaz();
+        catalogoMuebles.pop();
 
+        actualizarInterfaz();
 
-    // Limpiar formulario
+        mostrarMensaje(
+            "No se pudo guardar el mueble. Intentá nuevamente.",
+            "error"
+        );
 
-    formularioMueble.reset();
-
-
-    mostrarMensaje(
-        `El mueble "${nombre}" fue agregado y guardado correctamente.`,
-        "exito"
-    );
+    }
 
 });
 
@@ -478,8 +441,6 @@ contenedorItems.addEventListener("click", function(evento) {
     const botonPresupuestar = evento.target.closest(".btn-presupuestar");
 
 
-    // ELIMINAR
-
     if (botonEliminar) {
 
         const id = Number(botonEliminar.dataset.id);
@@ -490,49 +451,45 @@ contenedorItems.addEventListener("click", function(evento) {
 
 
         if (indice === -1) {
-
-            mostrarMensaje(
-                "No encontramos el mueble seleccionado.",
-                "error"
-            );
-
+            mostrarMensaje("No encontramos el mueble seleccionado.", "error");
             return;
-
         }
 
 
-        const nombreEliminado = catalogoMuebles[indice].nombre;
+        const muebleEliminado = catalogoMuebles[indice];
 
+        try {
 
-        // Eliminar del array
+            catalogoMuebles.splice(indice, 1);
 
-        catalogoMuebles.splice(indice, 1);
+            guardarMuebles();
 
+            actualizarInterfaz();
 
-        // Actualizar localStorage
+            resultadoPresupuesto.innerHTML = "";
 
-        guardarMuebles();
+            mostrarMensaje(
+                `El mueble "${muebleEliminado.nombre}" fue eliminado correctamente.`,
+                "exito"
+            );
 
+        } catch (error) {
 
-        // Actualizar DOM
+            catalogoMuebles.splice(indice, 0, muebleEliminado);
 
-        actualizarInterfaz();
+            actualizarInterfaz();
 
+            mostrarMensaje(
+                "No se pudo eliminar el mueble. Intentá nuevamente.",
+                "error"
+            );
 
-        resultadoPresupuesto.innerHTML = "";
-
-
-        mostrarMensaje(
-            `El mueble "${nombreEliminado}" fue eliminado correctamente.`,
-            "exito"
-        );
+        }
 
         return;
 
     }
 
-
-    // PRESUPUESTAR
 
     if (botonPresupuestar) {
 
@@ -542,8 +499,6 @@ contenedorItems.addEventListener("click", function(evento) {
             return mueble.id === id;
         });
 
-
-        // Optional chaining
 
         if (!muebleSeleccionado?.id) {
 
@@ -559,12 +514,10 @@ contenedorItems.addEventListener("click", function(evento) {
 
         seleccionarMueble.value = String(id);
 
-
         formularioPresupuesto.scrollIntoView({
             behavior: "smooth",
             block: "center"
         });
-
 
         mostrarMensaje(
             "Mueble seleccionado. Completá los datos del presupuesto.",
@@ -582,14 +535,18 @@ contenedorItems.addEventListener("click", function(evento) {
 
 inputBuscar.addEventListener("input", function() {
 
-    renderizarMuebles();
+    if (catalogoCargado) {
+        renderizarMuebles();
+    }
 
 });
 
 
 inputFiltroPresupuesto.addEventListener("input", function() {
 
-    renderizarMuebles();
+    if (catalogoCargado) {
+        renderizarMuebles();
+    }
 
 });
 
@@ -601,7 +558,6 @@ inputFiltroPresupuesto.addEventListener("input", function() {
 function actualizarSelectorMuebles() {
 
     const seleccionAnterior = seleccionarMueble.value;
-
 
     seleccionarMueble.innerHTML = `
         <option value="">Seleccionar mueble</option>
@@ -642,6 +598,11 @@ function actualizarSelectorMuebles() {
 formularioPresupuesto.addEventListener("submit", function(evento) {
 
     evento.preventDefault();
+
+    if (!catalogoCargado) {
+        mostrarMensaje("Esperá a que termine la carga del catálogo.", "error");
+        return;
+    }
 
 
     const nombreCliente = inputCliente.value.trim();
@@ -714,8 +675,6 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
 
     const clasificacion = clasificarPresupuesto(total);
 
-
-    // Destructuring
 
     const {
         nombre,
@@ -839,9 +798,122 @@ function actualizarInventario() {
 
 
 // ==========================================
-// 14. INICIALIZACIÓN
+// 14. PROMESA PARA CARGAR MUEBLES
 // ==========================================
 
-// Mostrar los datos recuperados de localStorage
+// Simulamos una carga asincrónica del catálogo.
+// La promesa se resuelve después de 1,5 segundos.
 
-actualizarInterfaz();
+function obtenerMuebles() {
+
+    return new Promise((resolve, reject) => {
+
+        setTimeout(() => {
+
+            try {
+
+                const muebles = cargarMuebles();
+
+                resolve(muebles);
+
+            } catch (error) {
+
+                reject(error);
+
+            }
+
+        }, 1500);
+
+    });
+
+}
+
+
+// ==========================================
+// 15. ASYNC / AWAIT Y TRY-CATCH-FINALLY
+// ==========================================
+
+async function iniciarSimulador() {
+
+    estadoCarga.textContent = "⏳ Cargando catálogo de muebles...";
+
+    estadoCarga.className = "estado-carga";
+
+    catalogoCargado = false;
+
+    try {
+
+        // Esperar la resolución de la promesa
+
+        const muebles = await obtenerMuebles();
+
+        catalogoMuebles = muebles;
+
+        // Guardar catálogo inicial solo si todavía no existe
+
+        if (localStorage.getItem(CLAVE_STORAGE) === null) {
+            guardarMuebles();
+        }
+
+        catalogoCargado = true;
+
+        actualizarInterfaz();
+
+        estadoCarga.textContent =
+            `✔️ Catálogo cargado correctamente: ${catalogoMuebles.length} muebles disponibles.`;
+
+        estadoCarga.className = "estado-carga carga-exitosa";
+
+    } catch (error) {
+
+        catalogoCargado = false;
+
+        estadoCarga.textContent =
+            "⚠️ No se pudo cargar el catálogo. Intentá nuevamente.";
+
+        estadoCarga.className = "estado-carga carga-error";
+
+        mostrarMensaje(
+            "Ocurrió un error al cargar los muebles.",
+            "error"
+        );
+
+    } finally {
+
+        // Este bloque siempre se ejecuta.
+        // Finaliza el estado de carga.
+
+        estadoCarga.classList.add("carga-finalizada");
+
+    }
+
+}
+
+
+// ==========================================
+// 16. TEMPORIZADOR
+// ==========================================
+
+// Mostrar información complementaria después de 3,5 segundos.
+
+setTimeout(() => {
+
+    const aviso = document.createElement("div");
+
+    aviso.className = "aviso-anticipo";
+
+    aviso.textContent =
+        "🔔 Recordá que podés calcular tu presupuesto con un anticipo del 50%.";
+
+    const encabezado = document.querySelector(".header");
+
+    encabezado.insertAdjacentElement("afterend", aviso);
+
+}, 3500);
+
+
+// ==========================================
+// 17. INICIALIZACIÓN
+// ==========================================
+
+iniciarSimulador();

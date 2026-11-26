@@ -245,6 +245,51 @@ select:focus {
 
 
 /* ==========================================
+   ESTADO DE CARGA ASINCRÓNICA
+========================================== */
+
+.estado-carga {
+    padding: 16px 20px;
+    margin-bottom: 25px;
+    border-radius: 10px;
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+    font-weight: bold;
+}
+
+.estado-carga.carga-exitosa {
+    background-color: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.estado-carga.carga-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+
+/* ==========================================
+   AVISO DEL TEMPORIZADOR
+========================================== */
+
+.aviso-anticipo {
+    width: 90%;
+    max-width: 1200px;
+    margin: -10px auto 30px;
+    padding: 18px 22px;
+    border-radius: 10px;
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    font-weight: bold;
+    text-align: center;
+}
+
+
+/* ==========================================
    RESULTADO DEL PRESUPUESTO
 ========================================== */
 
@@ -359,6 +404,11 @@ select:focus {
 
     .acciones {
         flex-direction: column;
+    }
+
+    .aviso-anticipo {
+        padding: 15px;
+        font-size: 14px;
     }
 
 }
