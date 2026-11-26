@@ -9,6 +9,10 @@
 
     <link rel="stylesheet" href="css/style.css">
 
+    <!-- Librería SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+
+    <!-- JavaScript principal -->
     <script src="js/main.js" defer></script>
 </head>
 
@@ -39,6 +43,7 @@
 
                     <div>
                         <label for="nombre-mueble">Nombre</label>
+
                         <input
                             type="text"
                             id="nombre-mueble"
@@ -49,6 +54,7 @@
 
                     <div>
                         <label for="precio-mueble">Precio</label>
+
                         <input
                             type="number"
                             id="precio-mueble"
@@ -74,6 +80,7 @@
 
                     <div>
                         <label for="stock-mueble">Stock</label>
+
                         <input
                             type="number"
                             id="stock-mueble"
@@ -100,8 +107,16 @@
 
             <h2>Catálogo de muebles</h2>
 
-            <div id="estado-carga" class="estado-carga" role="status" aria-live="polite">
-                ⏳ Cargando catálogo de muebles...
+            <!-- Indicador de carga del JSON -->
+
+            <div
+                id="estado-carga"
+                class="estado-carga"
+                role="status"
+                aria-live="polite"
+            >
+                <span class="spinner"></span>
+                Cargando catálogo de muebles...
             </div>
 
             <div class="filtros">
@@ -155,7 +170,9 @@
                     </div>
 
                     <div>
-                        <label for="seleccionar-mueble">Seleccionar mueble</label>
+                        <label for="seleccionar-mueble">
+                            Seleccionar mueble
+                        </label>
 
                         <select id="seleccionar-mueble" required>
                             <option value="">Seleccionar mueble</option>
@@ -200,7 +217,10 @@
     </main>
 
     <footer class="footer">
-        <p>Simulador de Presupuestos de Muebles | Proyecto JavaScript - Coderhouse</p>
+        <p>
+            Simulador de Presupuestos de Muebles |
+            Proyecto JavaScript - Coderhouse
+        </p>
     </footer>
 
 </body>

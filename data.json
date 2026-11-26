@@ -1,0 +1,37 @@
+[
+    {
+        "id": 1,
+        "nombre": "Mesa",
+        "precio": 250000,
+        "categoria": "Comedor",
+        "stock": 10
+    },
+    {
+        "id": 2,
+        "nombre": "Silla",
+        "precio": 50000,
+        "categoria": "Comedor",
+        "stock": 20
+    },
+    {
+        "id": 3,
+        "nombre": "Escritorio",
+        "precio": 180000,
+        "categoria": "Oficina",
+        "stock": 8
+    },
+    {
+        "id": 4,
+        "nombre": "Placard",
+        "precio": 450000,
+        "categoria": "Dormitorio",
+        "stock": 5
+    },
+    {
+        "id": 5,
+        "nombre": "Biblioteca modular",
+        "precio": 200000,
+        "categoria": "Living",
+        "stock": 6
+    }
+]

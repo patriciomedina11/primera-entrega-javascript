@@ -1,6 +1,6 @@
 // ==========================================
-// PRE-ENTREGA 9
-// ASINCRONISMO Y PROMESAS
+// PRE-ENTREGA 10
+// APIs, PETICIONES Y LIBRERÍAS
 // SIMULADOR DE PRESUPUESTOS DE MUEBLES
 // ==========================================
 
@@ -31,26 +31,7 @@ class Mueble {
 
 
 // ==========================================
-// 2. CATÁLOGO INICIAL
-// ==========================================
-
-const mueblesIniciales = [
-
-    new Mueble(1, "Mesa", 250000, "Comedor", 10),
-
-    new Mueble(2, "Silla", 50000, "Comedor", 20),
-
-    new Mueble(3, "Escritorio", 180000, "Oficina", 8),
-
-    new Mueble(4, "Placard", 450000, "Dormitorio", 5),
-
-    new Mueble(5, "Biblioteca modular", 200000, "Living", 6)
-
-];
-
-
-// ==========================================
-// 3. LOCALSTORAGE
+// 2. VARIABLES GENERALES
 // ==========================================
 
 const CLAVE_STORAGE = "catalogoMuebles";
@@ -60,23 +41,17 @@ let catalogoMuebles = [];
 let catalogoCargado = false;
 
 
-// Recuperar muebles guardados
+// ==========================================
+// 3. LOCALSTORAGE
+// ==========================================
 
-function cargarMuebles() {
+function convertirMuebles(datos) {
 
-    const datosGuardados = localStorage.getItem(CLAVE_STORAGE);
-
-    let mueblesRecuperados = datosGuardados !== null
-        ? JSON.parse(datosGuardados)
-        : mueblesIniciales;
-
-    mueblesRecuperados = mueblesRecuperados ?? mueblesIniciales;
-
-    if (!Array.isArray(mueblesRecuperados)) {
-        throw new Error("El catálogo almacenado no es válido.");
+    if (!Array.isArray(datos)) {
+        throw new Error("El catálogo no es válido.");
     }
 
-    return mueblesRecuperados.map(mueble => {
+    return datos.map(mueble => {
 
         const {
             id,
@@ -88,11 +63,13 @@ function cargarMuebles() {
 
         if (
             !Number.isInteger(id) ||
+            id <= 0 ||
             typeof nombre !== "string" ||
             nombre.trim() === "" ||
             !Number.isFinite(precio) ||
             precio <= 0 ||
             typeof categoria !== "string" ||
+            categoria.trim() === "" ||
             !Number.isInteger(stock) ||
             stock < 0
         ) {
@@ -112,7 +89,22 @@ function cargarMuebles() {
 }
 
 
-// Guardar cambios
+function cargarMuebles(datosIniciales) {
+
+    const datosGuardados = localStorage.getItem(CLAVE_STORAGE);
+
+    if (datosGuardados !== null) {
+
+        return convertirMuebles(
+            JSON.parse(datosGuardados)
+        );
+
+    }
+
+    return convertirMuebles(datosIniciales);
+
+}
+
 
 function guardarMuebles() {
 
@@ -214,19 +206,95 @@ function escaparHTML(texto) {
 }
 
 
-// Mostrar mensajes en el DOM
+// ==========================================
+// 6. LIBRERÍA SWEETALERT2
+// ==========================================
 
 function mostrarMensaje(texto, tipo = "exito") {
 
-    mensaje.textContent = texto;
+    // Alternativa visual si la librería no está disponible
 
-    mensaje.className = `mensaje visible ${tipo}`;
+    if (typeof Swal === "undefined") {
+
+        mensaje.textContent = texto;
+
+        mensaje.className = `mensaje visible ${tipo}`;
+
+        return;
+
+    }
+
+    mensaje.className = "mensaje";
+
+    if (tipo === "error") {
+
+        Swal.fire({
+            icon: "error",
+            title: "Ocurrió un problema",
+            text: texto,
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#2563eb"
+        });
+
+    } else {
+
+        Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            titleText: texto,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+    }
+
+}
+
+
+// Confirmación antes de eliminar un mueble
+
+async function confirmarEliminacion(nombre) {
+
+    if (typeof Swal === "undefined") {
+
+        mostrarMensaje(
+            "No se pudo cargar la librería de confirmación. Recargá la página.",
+            "error"
+        );
+
+        return false;
+
+    }
+
+    const resultado = await Swal.fire({
+
+        title: "¿Eliminar mueble?",
+
+        text: `Estás por eliminar "${nombre}" del catálogo.`,
+
+        icon: "warning",
+
+        showCancelButton: true,
+
+        confirmButtonText: "Sí, eliminar",
+
+        cancelButtonText: "Cancelar",
+
+        confirmButtonColor: "#dc2626",
+
+        cancelButtonColor: "#64748b"
+
+    });
+
+    return resultado.isConfirmed;
 
 }
 
 
 // ==========================================
-// 6. RENDERIZADO DINÁMICO
+// 7. RENDERIZADO DINÁMICO DEL CATÁLOGO
 // ==========================================
 
 function renderizarMuebles() {
@@ -328,7 +396,7 @@ function renderizarMuebles() {
 
 
 // ==========================================
-// 7. ACTUALIZAR INTERFAZ
+// 8. ACTUALIZAR INTERFAZ
 // ==========================================
 
 function actualizarInterfaz() {
@@ -342,8 +410,33 @@ function actualizarInterfaz() {
 }
 
 
+// Habilitar o deshabilitar formularios
+
+function habilitarControles(habilitado) {
+
+    formularioMueble.querySelectorAll("input, select, button")
+        .forEach(elemento => {
+
+            elemento.disabled = !habilitado;
+
+        });
+
+    formularioPresupuesto.querySelectorAll("input, select, button")
+        .forEach(elemento => {
+
+            elemento.disabled = !habilitado;
+
+        });
+
+    inputBuscar.disabled = !habilitado;
+
+    inputFiltroPresupuesto.disabled = !habilitado;
+
+}
+
+
 // ==========================================
-// 8. AGREGAR MUEBLES
+// 9. AGREGAR MUEBLES
 // ==========================================
 
 formularioMueble.addEventListener("submit", function(evento) {
@@ -351,9 +444,16 @@ formularioMueble.addEventListener("submit", function(evento) {
     evento.preventDefault();
 
     if (!catalogoCargado) {
-        mostrarMensaje("Esperá a que termine la carga del catálogo.", "error");
+
+        mostrarMensaje(
+            "El catálogo todavía no está disponible.",
+            "error"
+        );
+
         return;
+
     }
+
 
     const nombre = inputNombre.value.trim();
 
@@ -399,92 +499,127 @@ formularioMueble.addEventListener("submit", function(evento) {
     );
 
 
+    catalogoMuebles.push(nuevoMueble);
+
     try {
 
-        catalogoMuebles.push(nuevoMueble);
-
         guardarMuebles();
-
-        actualizarInterfaz();
-
-        formularioMueble.reset();
-
-        mostrarMensaje(
-            `El mueble "${nombre}" fue agregado y guardado correctamente.`,
-            "exito"
-        );
 
     } catch (error) {
 
         catalogoMuebles.pop();
-
-        actualizarInterfaz();
 
         mostrarMensaje(
             "No se pudo guardar el mueble. Intentá nuevamente.",
             "error"
         );
 
+        return;
+
     }
+
+    actualizarInterfaz();
+
+    formularioMueble.reset();
+
+    mostrarMensaje(
+        `El mueble "${nombre}" fue agregado correctamente.`,
+        "exito"
+    );
 
 });
 
 
 // ==========================================
-// 9. ELIMINAR Y SELECCIONAR MUEBLES
+// 10. ELIMINAR Y SELECCIONAR MUEBLES
 // ==========================================
 
-contenedorItems.addEventListener("click", function(evento) {
+contenedorItems.addEventListener("click", async function(evento) {
 
     const botonEliminar = evento.target.closest(".btn-borrar");
 
     const botonPresupuestar = evento.target.closest(".btn-presupuestar");
 
 
+    if (!catalogoCargado) {
+        return;
+    }
+
+
     if (botonEliminar) {
 
         const id = Number(botonEliminar.dataset.id);
 
-        const indice = catalogoMuebles.findIndex(mueble => {
+        const mueble = catalogoMuebles.find(mueble => {
+
             return mueble.id === id;
+
+        });
+
+
+        if (!mueble) {
+
+            mostrarMensaje(
+                "No encontramos el mueble seleccionado.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        // Confirmación mediante SweetAlert2
+
+        const confirmado = await confirmarEliminacion(mueble.nombre);
+
+        if (!confirmado) {
+            return;
+        }
+
+
+        const indice = catalogoMuebles.findIndex(mueble => {
+
+            return mueble.id === id;
+
         });
 
 
         if (indice === -1) {
-            mostrarMensaje("No encontramos el mueble seleccionado.", "error");
             return;
         }
 
 
         const muebleEliminado = catalogoMuebles[indice];
 
+        catalogoMuebles.splice(indice, 1);
+
+
         try {
 
-            catalogoMuebles.splice(indice, 1);
-
             guardarMuebles();
-
-            actualizarInterfaz();
-
-            resultadoPresupuesto.innerHTML = "";
-
-            mostrarMensaje(
-                `El mueble "${muebleEliminado.nombre}" fue eliminado correctamente.`,
-                "exito"
-            );
 
         } catch (error) {
 
             catalogoMuebles.splice(indice, 0, muebleEliminado);
 
-            actualizarInterfaz();
-
             mostrarMensaje(
-                "No se pudo eliminar el mueble. Intentá nuevamente.",
+                "No se pudo eliminar el mueble.",
                 "error"
             );
 
+            return;
+
         }
+
+        actualizarInterfaz();
+
+        resultadoPresupuesto.innerHTML = "";
+
+        mostrarMensaje(
+            `El mueble "${muebleEliminado.nombre}" fue eliminado correctamente.`,
+            "exito"
+        );
 
         return;
 
@@ -496,11 +631,13 @@ contenedorItems.addEventListener("click", function(evento) {
         const id = Number(botonPresupuestar.dataset.id);
 
         const muebleSeleccionado = catalogoMuebles.find(mueble => {
+
             return mueble.id === id;
+
         });
 
 
-        if (!muebleSeleccionado?.id) {
+        if (!muebleSeleccionado) {
 
             mostrarMensaje(
                 "El mueble seleccionado ya no está disponible.",
@@ -519,6 +656,7 @@ contenedorItems.addEventListener("click", function(evento) {
             block: "center"
         });
 
+
         mostrarMensaje(
             "Mueble seleccionado. Completá los datos del presupuesto.",
             "exito"
@@ -530,7 +668,7 @@ contenedorItems.addEventListener("click", function(evento) {
 
 
 // ==========================================
-// 10. EVENTOS DE TECLADO
+// 11. FILTROS Y EVENTOS DE TECLADO
 // ==========================================
 
 inputBuscar.addEventListener("input", function() {
@@ -552,7 +690,7 @@ inputFiltroPresupuesto.addEventListener("input", function() {
 
 
 // ==========================================
-// 11. SELECTOR DE MUEBLES
+// 12. SELECTOR DE MUEBLES
 // ==========================================
 
 function actualizarSelectorMuebles() {
@@ -570,7 +708,8 @@ function actualizarSelectorMuebles() {
 
         opcion.value = mueble.id;
 
-        opcion.textContent = `${mueble.nombre} - ${formatoPrecio(mueble.precio)}`;
+        opcion.textContent =
+            `${mueble.nombre} - ${formatoPrecio(mueble.precio)}`;
 
         seleccionarMueble.appendChild(opcion);
 
@@ -592,16 +731,23 @@ function actualizarSelectorMuebles() {
 
 
 // ==========================================
-// 12. CALCULAR PRESUPUESTO
+// 13. CALCULAR PRESUPUESTO
 // ==========================================
 
 formularioPresupuesto.addEventListener("submit", function(evento) {
 
     evento.preventDefault();
 
+
     if (!catalogoCargado) {
-        mostrarMensaje("Esperá a que termine la carga del catálogo.", "error");
+
+        mostrarMensaje(
+            "El catálogo todavía no está disponible.",
+            "error"
+        );
+
         return;
+
     }
 
 
@@ -743,7 +889,7 @@ formularioPresupuesto.addEventListener("submit", function(evento) {
 
 
 // ==========================================
-// 13. INVENTARIO
+// 14. RESUMEN DEL INVENTARIO
 // ==========================================
 
 function actualizarInventario() {
@@ -798,31 +944,17 @@ function actualizarInventario() {
 
 
 // ==========================================
-// 14. PROMESA PARA CARGAR MUEBLES
+// 15. PROMESA Y TEMPORIZADOR
 // ==========================================
 
-// Simulamos una carga asincrónica del catálogo.
-// La promesa se resuelve después de 1,5 segundos.
+// Conservamos el uso de promesas de la entrega 9.
+// La demora permite visualizar el indicador de carga.
 
-function obtenerMuebles() {
+function esperar(milisegundos) {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
 
-        setTimeout(() => {
-
-            try {
-
-                const muebles = cargarMuebles();
-
-                resolve(muebles);
-
-            } catch (error) {
-
-                reject(error);
-
-            }
-
-        }, 1500);
+        setTimeout(resolve, milisegundos);
 
     });
 
@@ -830,60 +962,122 @@ function obtenerMuebles() {
 
 
 // ==========================================
-// 15. ASYNC / AWAIT Y TRY-CATCH-FINALLY
+// 16. FETCH, ASYNC/AWAIT Y MANEJO DE ERRORES
 // ==========================================
 
 async function iniciarSimulador() {
 
-    estadoCarga.textContent = "⏳ Cargando catálogo de muebles...";
+    estadoCarga.hidden = false;
 
     estadoCarga.className = "estado-carga";
 
+    estadoCarga.innerHTML = `
+        <span class="spinner"></span>
+        Cargando catálogo de muebles...
+    `;
+
     catalogoCargado = false;
+
+    habilitarControles(false);
+
 
     try {
 
-        // Esperar la resolución de la promesa
+        // Petición al archivo JSON local
 
-        const muebles = await obtenerMuebles();
+        const respuesta = await fetch("./data.json");
 
-        catalogoMuebles = muebles;
 
-        // Guardar catálogo inicial solo si todavía no existe
+        // Validar el estado de la respuesta HTTP
 
-        if (localStorage.getItem(CLAVE_STORAGE) === null) {
-            guardarMuebles();
+        if (!respuesta.ok) {
+
+            throw new Error(
+                `Error HTTP: ${respuesta.status}`
+            );
+
         }
 
-        catalogoCargado = true;
+
+        // Convertir la respuesta a datos JavaScript
+
+        const datos = await respuesta.json();
+
+
+        // Validar los datos recibidos
+
+        const mueblesIniciales = convertirMuebles(datos);
+
+
+        // Demora visual para mostrar el indicador
+
+        await esperar(1000);
+
+
+        // Recuperar cambios anteriores del localStorage
+
+        catalogoMuebles = cargarMuebles(mueblesIniciales);
+
+
+        // Guardar los datos iniciales si no existen
+
+        if (localStorage.getItem(CLAVE_STORAGE) === null) {
+
+            guardarMuebles();
+
+        }
+
+
+        // Renderizar los datos en el DOM
 
         actualizarInterfaz();
 
-        estadoCarga.textContent =
-            `✔️ Catálogo cargado correctamente: ${catalogoMuebles.length} muebles disponibles.`;
+        catalogoCargado = true;
 
-        estadoCarga.className = "estado-carga carga-exitosa";
+
+        // Notificación exitosa con SweetAlert2
+
+        mostrarMensaje(
+            "Catálogo cargado correctamente.",
+            "exito"
+        );
+
 
     } catch (error) {
 
+        // Capturar errores de red, HTTP o datos inválidos
+
         catalogoCargado = false;
 
-        estadoCarga.textContent =
-            "⚠️ No se pudo cargar el catálogo. Intentá nuevamente.";
+        console.error("Error al cargar el catálogo:", error);
 
-        estadoCarga.className = "estado-carga carga-error";
+
+        contenedorItems.innerHTML = `
+
+            <p class="sin-resultados">
+                No se pudo cargar el catálogo de muebles.
+                Recargá la página para intentar nuevamente.
+            </p>
+
+        `;
+
+
+        // Notificación de error con SweetAlert2
 
         mostrarMensaje(
-            "Ocurrió un error al cargar los muebles.",
+            "No se pudo cargar el catálogo de muebles. Verificá la conexión y el archivo data.json.",
             "error"
         );
 
+
     } finally {
 
-        // Este bloque siempre se ejecuta.
-        // Finaliza el estado de carga.
+        // Ocultar el indicador tanto si hay éxito
+        // como si ocurre un error
 
-        estadoCarga.classList.add("carga-finalizada");
+        estadoCarga.hidden = true;
+
+        habilitarControles(catalogoCargado);
 
     }
 
@@ -891,10 +1085,8 @@ async function iniciarSimulador() {
 
 
 // ==========================================
-// 16. TEMPORIZADOR
+// 17. TEMPORIZADOR INFORMATIVO
 // ==========================================
-
-// Mostrar información complementaria después de 3,5 segundos.
 
 setTimeout(() => {
 
@@ -913,7 +1105,7 @@ setTimeout(() => {
 
 
 // ==========================================
-// 17. INICIALIZACIÓN
+// 18. INICIALIZACIÓN DEL SIMULADOR
 // ==========================================
 
 iniciarSimulador();
